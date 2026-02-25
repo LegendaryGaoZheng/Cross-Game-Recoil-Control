@@ -597,4 +597,5 @@ GuiClose(*) {
 GuiEscape(*) {
     global MyGui
     MyGui.Hide()
+
 }
