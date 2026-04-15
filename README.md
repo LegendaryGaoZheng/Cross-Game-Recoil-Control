@@ -1,5 +1,7 @@
 # Legendary压枪助手 - 更新日志
 
+<img src="images/logo.jpg" width="100%" />
+
 本文档记录 Legendary压枪助手 主要发布版本 的更新历史。
 
 ## 使用方式（必看）
