@@ -1,0 +1,33 @@
+# Build outputs
+bin/
+obj/
+publish/
+publish-updated/
+
+# Local .NET caches
+.dotnet-cli/
+.dotnet-home/
+
+# User and IDE files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Runtime/debug files
+*.pdb
+*.log
+*.tmp
+image-diagnostic.png
+Profiles/
+
+# Local app settings generated next to the exe
+LegendaryCSharp.settings.json
+LegendaryCSharp.image-recognition.json
+
+# Release binaries should go to GitHub Releases, not source commits
+*.exe
+*.zip
