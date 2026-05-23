@@ -11,6 +11,10 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <Version>3.1.2</Version>
+    <AssemblyVersion>3.1.2.0</AssemblyVersion>
+    <FileVersion>3.1.2.0</FileVersion>
+    <Product>Legendary v3.1.2</Product>
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Assets\app.ico" />

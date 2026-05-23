@@ -29,7 +29,7 @@ public sealed class AppSettings
     public int ColorTolerance { get; set; } = 30;
     public int SearchIntervalMs { get; set; } = 50;
     public string TargetColor { get; set; } = "0x000000";
-    public bool UseTargetColor { get; set; }
+    public bool UseTargetColor { get; set; } = true;
     public int ColorPickOffsetX { get; set; } = 14;
     public int ColorPickOffsetY { get; set; } = 14;
     public string TriggerKey { get; set; } = "x";
@@ -182,7 +182,7 @@ public sealed class AppSettings
         public int ColorTolerance { get; set; } = 30;
         public int SearchIntervalMs { get; set; } = 50;
         public string TargetColor { get; set; } = "0x000000";
-        public bool UseTargetColor { get; set; }
+        public bool UseTargetColor { get; set; } = true;
         public int ColorPickOffsetX { get; set; } = 14;
         public int ColorPickOffsetY { get; set; } = 14;
         public string TriggerKey { get; set; } = "x";
@@ -202,7 +202,7 @@ public sealed class AppSettings
             ColorTolerance = settings.ColorTolerance,
             SearchIntervalMs = settings.SearchIntervalMs,
             TargetColor = settings.TargetColor,
-            UseTargetColor = settings.UseTargetColor,
+            UseTargetColor = true,
             ColorPickOffsetX = settings.ColorPickOffsetX,
             ColorPickOffsetY = settings.ColorPickOffsetY,
             TriggerKey = settings.TriggerKey,
@@ -223,7 +223,7 @@ public sealed class AppSettings
             settings.ColorTolerance = ColorTolerance;
             settings.SearchIntervalMs = SearchIntervalMs;
             settings.TargetColor = TargetColor;
-            settings.UseTargetColor = UseTargetColor;
+            settings.UseTargetColor = true;
             settings.ColorPickOffsetX = ColorPickOffsetX;
             settings.ColorPickOffsetY = ColorPickOffsetY;
             settings.TriggerKey = TriggerKey;

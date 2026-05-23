@@ -27,9 +27,9 @@ public sealed class ImageRecognitionMonitor
     public event EventHandler<ImageRecognitionDebugEventArgs>? DebugUpdated;
     public event EventHandler<string>? StatusChanged;
 
-    public void ApplySettings(AppSettings settings, bool masterEnabled)
+    public void ApplySettings(AppSettings settings)
     {
-        RestartScanner(ImageScanPlan.From(settings, masterEnabled));
+        RestartScanner(ImageScanPlan.From(settings));
     }
 
     public void Stop()
@@ -266,13 +266,8 @@ public sealed class ImageRecognitionMonitor
         int TriggerCooldownMs,
         bool DebugEnabled)
     {
-        public static ImageScanPlan From(AppSettings settings, bool masterEnabled)
+        public static ImageScanPlan From(AppSettings settings)
         {
-            if (!masterEnabled)
-            {
-                return Stopped("识别未启动：总开关关");
-            }
-
             if (!settings.ImageRecognitionEnabled)
             {
                 return Stopped("识别未启动：自动触发未勾选");
@@ -283,8 +278,7 @@ public sealed class ImageRecognitionMonitor
                 return Stopped("识别未启动：F2 关");
             }
 
-            var targetText = settings.UseTargetColor ? settings.TargetColor : "0x000000";
-            if (!ColorUtilities.TryParseHexColor(targetText, out var targetRgb))
+            if (!ColorUtilities.TryParseHexColor(settings.TargetColor, out var targetRgb))
             {
                 return Stopped("识别未启动：目标颜色格式无效");
             }

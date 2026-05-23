@@ -87,7 +87,6 @@ public partial class MainWindow : Window
         SearchX2Box.Text = _settings.SearchX2.ToString();
         SearchY2Box.Text = _settings.SearchY2.ToString();
         TargetColorBox.Text = _settings.TargetColor;
-        UseTargetColorBox.IsChecked = _settings.UseTargetColor;
         ToleranceBox.Text = _settings.ColorTolerance.ToString();
         IntervalBox.Text = _settings.SearchIntervalMs.ToString();
         TriggerKeyBox.Text = _settings.TriggerKey;
@@ -159,7 +158,7 @@ public partial class MainWindow : Window
         settings.ColorTolerance = Math.Clamp(tolerance, 0, 255);
         settings.SearchIntervalMs = Math.Clamp(interval, 20, 2000);
         settings.TargetColor = ColorUtilities.ToHex(targetRgb);
-        settings.UseTargetColor = UseTargetColorBox.IsChecked == true;
+        settings.UseTargetColor = true;
         settings.ColorPickOffsetX = Math.Clamp(colorPickOffsetX, -200, 200);
         settings.ColorPickOffsetY = Math.Clamp(colorPickOffsetY, -200, 200);
         settings.TriggerKey = triggerKey;
@@ -247,7 +246,7 @@ public partial class MainWindow : Window
         settings.ColorTolerance = Math.Clamp(tolerance, 0, 255);
         settings.SearchIntervalMs = Math.Clamp(interval, 20, 2000);
         settings.TargetColor = ColorUtilities.ToHex(targetRgb);
-        settings.UseTargetColor = UseTargetColorBox.IsChecked == true;
+        settings.UseTargetColor = true;
         settings.ColorPickOffsetX = Math.Clamp(colorPickOffsetX, -200, 200);
         settings.ColorPickOffsetY = Math.Clamp(colorPickOffsetY, -200, 200);
         settings.TriggerKey = triggerKey;
@@ -282,7 +281,7 @@ public partial class MainWindow : Window
         ColorTolerance = source.ColorTolerance,
         SearchIntervalMs = source.SearchIntervalMs,
         TargetColor = source.TargetColor,
-        UseTargetColor = source.UseTargetColor,
+        UseTargetColor = true,
         ColorPickOffsetX = source.ColorPickOffsetX,
         ColorPickOffsetY = source.ColorPickOffsetY,
         TriggerKey = source.TriggerKey,
@@ -969,9 +968,9 @@ public partial class MainWindow : Window
             _settings.MasterEnabled = _runtime.MasterEnabled;
             _settings.Save();
             ApplyRuntimeSettings();
-            SetStatus(_runtime.MasterEnabled ? "总开关：开" : "总开关：关");
-            ShowStateOverlay("总开关", _runtime.MasterEnabled ? "已开启" : "已关闭", _runtime.MasterEnabled);
-            Log(_runtime.MasterEnabled ? "总开关已开启。" : "总开关已关闭。");
+            SetStatus(_runtime.MasterEnabled ? "热键总开关：开" : "热键总开关：关");
+            ShowStateOverlay("热键总开关", _runtime.MasterEnabled ? "已开启" : "已关闭", _runtime.MasterEnabled);
+            Log(_runtime.MasterEnabled ? "热键总开关已开启。" : "热键总开关已关闭。");
             handled = true;
         }
         else if (id == ImageHotkeyId)
@@ -991,7 +990,7 @@ public partial class MainWindow : Window
     private void ApplyRuntimeSettings()
     {
         _runtime.ApplySettings(_settings);
-        _imageMonitor.ApplySettings(_settings, _runtime.MasterEnabled);
+        _imageMonitor.ApplySettings(_settings);
         UpdateImageDebugOverlayVisibility();
         UpdateTrajectoryPreview();
     }
@@ -1047,7 +1046,7 @@ public partial class MainWindow : Window
     }
 
     private bool IsImageRecognitionActive() =>
-        _runtime.MasterEnabled && _settings.ImageRecognitionEnabled && _settings.ImageRecognitionF2Enabled && _settings.ImageDebug;
+        _settings.ImageRecognitionEnabled && _settings.ImageRecognitionF2Enabled && _settings.ImageDebug;
 
     private void StartInputHook()
     {
@@ -1159,16 +1158,34 @@ public partial class MainWindow : Window
         var horizontal = ReadPreviewInt(HorizontalRecoilBox?.Text, _settings.HorizontalRecoil);
         var pattern = HorizontalPatternBox?.SelectedIndex ?? _settings.HorizontalPattern;
 
+        const int previewSteps = 12;
         var startX = width / 2;
         var startY = TrajectoryStartY;
-        var length = Math.Sqrt(horizontal * horizontal + vertical * vertical);
-        var available = Math.Max(1, height - TrajectoryStartY * 2);
-        var scale = length > 0 ? Math.Min(TrajectoryScaleMax, available / length) : 0;
+        var rawPoints = new List<System.Windows.Point> { new(0, 0) };
+        var accumulatedX = 0.0;
+        var accumulatedY = 0.0;
+        for (var shot = 0; shot < previewSteps; shot++)
+        {
+            var stepX = pattern == 1 && shot % 2 != 0 ? -horizontal : horizontal;
+            accumulatedX += stepX;
+            accumulatedY += vertical;
+            rawPoints.Add(new System.Windows.Point(accumulatedX, accumulatedY));
+        }
 
-        var endX = startX - horizontal * scale;
-        var endY = startY + vertical * scale;
-        endX = Math.Clamp(endX, TrajectoryMargin, width - TrajectoryMargin);
-        endY = Math.Clamp(endY, startY + 2, height - TrajectoryMargin);
+        var maxX = Math.Max(1, rawPoints.Max(point => Math.Abs(point.X)));
+        var maxY = Math.Max(1, rawPoints.Max(point => Math.Abs(point.Y)));
+        var scaleX = (width / 2 - TrajectoryMargin) / maxX;
+        var scaleY = (height - TrajectoryStartY - TrajectoryMargin) / maxY;
+        var scale = Math.Min(TrajectoryScaleMax, Math.Min(scaleX, scaleY));
+        var points = new System.Windows.Media.PointCollection();
+        foreach (var point in rawPoints)
+        {
+            points.Add(new System.Windows.Point(
+                Math.Clamp(startX + point.X * scale, TrajectoryMargin, width - TrajectoryMargin),
+                Math.Clamp(startY + point.Y * scale, startY, height - TrajectoryMargin)));
+        }
+
+        var endPoint = points[points.Count - 1];
 
         TrajectoryVerticalGuide.X1 = startX;
         TrajectoryVerticalGuide.Y1 = 0;
@@ -1180,16 +1197,13 @@ public partial class MainWindow : Window
         TrajectoryHorizontalGuide.X2 = width;
         TrajectoryHorizontalGuide.Y2 = startY;
 
-        TrajectoryLine.X1 = startX;
-        TrajectoryLine.Y1 = startY;
-        TrajectoryLine.X2 = endX;
-        TrajectoryLine.Y2 = endY;
+        TrajectoryLine.Points = points;
 
         CanvasSetCenter(TrajectoryStartDot, startX, startY);
-        CanvasSetCenter(TrajectoryEndDot, endX, endY);
+        CanvasSetCenter(TrajectoryEndDot, endPoint.X, endPoint.Y);
 
         var patternText = pattern == 1 ? "左右交替" : "固定方向";
-        TrajectoryInfoText.Text = $"垂直: {vertical}  横向: {horizontal}  模式: {patternText}";
+        TrajectoryInfoText.Text = $"压枪路径 | 垂直: {vertical}  横向: {horizontal}  模式: {patternText}";
     }
 
     private static int ReadPreviewInt(string? text, int fallback) =>

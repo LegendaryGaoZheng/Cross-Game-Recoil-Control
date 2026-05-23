@@ -3,18 +3,21 @@ namespace LegendaryCSharp.Services;
 public sealed class AssistantRuntime
 {
     private readonly InputService _input;
+    private readonly SemiAutoController _semiAuto;
     private readonly object _syncRoot = new();
     private AppSettings _settings = new();
     private bool _leftButtonDown;
     private bool _sideTriggerDown;
     private bool _breathKeyDown;
     private int _recoilLoopActive;
+    private int _semiAutoLoopActive;
     private int _shotCount;
     private DateTime _lastCut31Utc = DateTime.MinValue;
 
     public AssistantRuntime(InputService input)
     {
         _input = input;
+        _semiAuto = new SemiAutoController(input);
     }
 
     public bool MasterEnabled { get; private set; } = true;
@@ -46,7 +49,7 @@ public sealed class AssistantRuntime
             }
         }
 
-        StatusChanged?.Invoke(this, MasterEnabled ? "总开关已开启。" : "总开关已关闭。");
+        StatusChanged?.Invoke(this, MasterEnabled ? "热键总开关已开启。" : "热键总开关已关闭。");
     }
 
     public void HandleMouseButton(GlobalMouseButton button, bool isDown)
@@ -75,6 +78,7 @@ public sealed class AssistantRuntime
         }
 
         StartRecoilLoopIfNeeded();
+        StartSemiAutoLoopIfNeeded();
     }
 
     public void HandleMouseWheel(short delta)
@@ -162,9 +166,23 @@ public sealed class AssistantRuntime
         _ = Task.Run(RecoilLoopAsync);
     }
 
+    private void StartSemiAutoLoopIfNeeded()
+    {
+        if (!ShouldSemiAutoRun())
+        {
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _semiAutoLoopActive, 1) == 1)
+        {
+            return;
+        }
+
+        _ = Task.Run(SemiAutoLoopAsync);
+    }
+
     private async Task RecoilLoopAsync()
     {
-        var semiAutoPressed = false;
         try
         {
             StatusChanged?.Invoke(this, "压枪开始。");
@@ -175,20 +193,7 @@ public sealed class AssistantRuntime
                 var interval = Math.Clamp((int)Math.Round(60000.0 / Math.Max(1, settings.FireRate)), 15, 1000);
                 var shot = Interlocked.Increment(ref _shotCount) - 1;
 
-                if (settings.SemiAutoMode)
-                {
-                    _input.MouseButtonUp(GlobalMouseButton.Left);
-                    await Task.Delay(2);
-                    _input.MouseButtonDown(GlobalMouseButton.Left);
-                    semiAutoPressed = true;
-                }
-
                 var (horizontal, vertical) = CalculateRecoilCompensation(shot);
-                if (settings.SemiAutoMode)
-                {
-                    vertical *= 0.9;
-                }
-
                 _input.MoveMouseBy((int)Math.Round(horizontal), (int)Math.Round(vertical));
                 await Task.Delay(interval);
             }
@@ -197,12 +202,33 @@ public sealed class AssistantRuntime
         {
             Interlocked.Exchange(ref _recoilLoopActive, 0);
             Interlocked.Exchange(ref _shotCount, 0);
-            if (semiAutoPressed)
-            {
-                _input.MouseButtonUp(GlobalMouseButton.Left);
-            }
+            _semiAuto.ReleaseIfNeeded();
 
             StatusChanged?.Invoke(this, "压枪结束。");
+        }
+    }
+
+    private async Task SemiAutoLoopAsync()
+    {
+        try
+        {
+            StatusChanged?.Invoke(this, "半自动开始。");
+
+            while (ShouldSemiAutoRun())
+            {
+                var settings = SnapshotSettings();
+                var interval = Math.Clamp((int)Math.Round(60000.0 / Math.Max(1, settings.FireRate)), 15, 1000);
+
+                await _semiAuto.ApplyStepAsync(settings);
+                await Task.Delay(interval);
+            }
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _semiAutoLoopActive, 0);
+            _semiAuto.ReleaseIfNeeded();
+
+            StatusChanged?.Invoke(this, "半自动结束。");
         }
     }
 
@@ -212,6 +238,17 @@ public sealed class AssistantRuntime
         {
             return MasterEnabled
                 && _settings.RecoilEnabled
+                && _sideTriggerDown
+                && _leftButtonDown;
+        }
+    }
+
+    private bool ShouldSemiAutoRun()
+    {
+        lock (_syncRoot)
+        {
+            return MasterEnabled
+                && _settings.SemiAutoMode
                 && _sideTriggerDown
                 && _leftButtonDown;
         }
