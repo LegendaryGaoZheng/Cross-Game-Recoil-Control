@@ -32,6 +32,9 @@ public partial class MainWindow : Window
     private AppSettings _settings = AppSettings.Load();
     private HwndSource? _hwndSource;
     private int _logLineCount;
+    private readonly Dictionary<System.Windows.Controls.Button, ButtonFeedbackState> _buttonFeedbackStates = new();
+    private readonly Dictionary<System.Windows.Controls.Button, int> _buttonFeedbackVersions = new();
+    private int _buttonFeedbackVersion;
 
     public MainWindow()
     {
@@ -851,25 +854,31 @@ public partial class MainWindow : Window
 
     private async void ShowButtonFeedback(System.Windows.Controls.Button button, string doneText)
     {
-        var originalContent = button.Content;
-        var originalBackground = button.Background;
-        var originalForeground = button.Foreground;
+        if (!_buttonFeedbackStates.TryGetValue(button, out var originalState))
+        {
+            originalState = new ButtonFeedbackState(button.Content, button.Background, button.Foreground);
+            _buttonFeedbackStates[button] = originalState;
+        }
 
+        var version = unchecked(++_buttonFeedbackVersion);
+        _buttonFeedbackVersions[button] = version;
         button.Content = doneText;
         button.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(46, 125, 50));
         button.Foreground = System.Windows.Media.Brushes.White;
-        button.IsEnabled = false;
+        button.IsEnabled = true;
 
         await Task.Delay(900);
 
-        if (!button.IsVisible)
+        if (!_buttonFeedbackVersions.TryGetValue(button, out var currentVersion) || currentVersion != version)
         {
             return;
         }
 
-        button.Content = originalContent;
-        button.Background = originalBackground;
-        button.Foreground = originalForeground;
+        _buttonFeedbackVersions.Remove(button);
+        _buttonFeedbackStates.Remove(button);
+        button.Content = originalState.Content;
+        button.Background = originalState.Background;
+        button.Foreground = originalState.Foreground;
         button.IsEnabled = true;
     }
 
@@ -1223,4 +1232,9 @@ public partial class MainWindow : Window
         CaptureHit? FirstHit);
 
     private sealed record CaptureHit(int X, int Y, int Rgb);
+
+    private sealed record ButtonFeedbackState(
+        object? Content,
+        System.Windows.Media.Brush? Background,
+        System.Windows.Media.Brush? Foreground);
 }

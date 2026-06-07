@@ -4,6 +4,12 @@
 
 本文档记录 Legendary压枪助手 主要发布版本的更新历史。
 
+## 使用教程
+
+- [完整使用教程](docs/usage-guide.md)
+- 教程截图保存在 [docs/images](docs/images)。
+- PDF 版建议作为 GitHub Releases 附件发布，仓库内以 Markdown 教程为主，方便阅读、搜索和维护。
+
 ## 使用方式（必看）
 
 ### 直接运行发行版
@@ -65,6 +71,9 @@ C:\Users\Legen\Desktop\LegendaryCSharp\bin\Release\net10.0-windows\win-x64\publi
 - **命名同步**：
   - 总览里的“半自动随压枪”改回“半自动”。
   - 程序标题、内置使用说明和项目版本同步为 `v3.1.2`。
+
+- **档案按钮反馈修复**：
+  - 修复加载档案后按钮停留在“已加载”且无法继续点击的问题。
 
 ---
 
