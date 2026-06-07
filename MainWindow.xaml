@@ -33,6 +33,18 @@
                                FontSize="14" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="语言"
+                               Foreground="#C8D6CF"
+                               VerticalAlignment="Center"
+                               Margin="0,0,6,0" />
+                    <ComboBox x:Name="LanguageBox"
+                              Width="118"
+                              Height="34"
+                              Margin="0,0,10,0"
+                              SelectionChanged="LanguageBox_SelectionChanged">
+                        <ComboBoxItem Tag="zh-CN" Content="中文" />
+                        <ComboBoxItem Tag="en-US" Content="English" />
+                    </ComboBox>
                     <Button Content="使用说明" Width="82" Height="34" Margin="0,0,8,0" Click="HelpButton_Click" />
                     <Button x:Name="SaveButton" Content="保存全部" Width="90" Height="34" Margin="0,0,8,0" Click="SaveButton_Click" />
                     <Button x:Name="ReloadButton" Content="重载" Width="70" Height="34" Click="ReloadButton_Click" />

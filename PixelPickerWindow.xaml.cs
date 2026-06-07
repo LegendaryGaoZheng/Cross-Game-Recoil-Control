@@ -26,6 +26,7 @@ public partial class PixelPickerWindow : Window
     public PixelPickerWindow()
     {
         InitializeComponent();
+        Localization.ApplyTo(this);
 
         var physicalBounds = GetVirtualScreenBounds();
         _screenLeft = physicalBounds.Left;

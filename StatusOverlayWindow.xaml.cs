@@ -9,12 +9,15 @@ public partial class StatusOverlayWindow : Window
     public StatusOverlayWindow()
     {
         InitializeComponent();
+        Localization.ApplyTo(this);
         _hideTimer.Tick += (_, _) =>
         {
             _hideTimer.Stop();
             Hide();
         };
     }
+
+    public void ApplyLanguage() => Localization.ApplyTo(this);
 
     public void ShowStatus(string title, string detail, bool enabled, TimeSpan duration)
     {

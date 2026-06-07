@@ -17,6 +17,7 @@ public partial class RegionSelectionWindow : Window
     public RegionSelectionWindow()
     {
         InitializeComponent();
+        Localization.ApplyTo(this);
         Left = SystemParameters.VirtualScreenLeft;
         Top = SystemParameters.VirtualScreenTop;
         Width = SystemParameters.VirtualScreenWidth;

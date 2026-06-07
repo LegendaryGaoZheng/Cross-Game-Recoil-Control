@@ -35,9 +35,11 @@ public partial class MainWindow : Window
     private readonly Dictionary<System.Windows.Controls.Button, ButtonFeedbackState> _buttonFeedbackStates = new();
     private readonly Dictionary<System.Windows.Controls.Button, int> _buttonFeedbackVersions = new();
     private int _buttonFeedbackVersion;
+    private bool _isUpdatingLanguageSelection;
 
     public MainWindow()
     {
+        Localization.SetLanguage(_settings.Language);
         InitializeComponent();
         _runtime = new AssistantRuntime(_input);
         _runtime.StatusChanged += (_, message) => RunOnUi(() => Log(message));
@@ -54,7 +56,7 @@ public partial class MainWindow : Window
         _runtime.ApplySettings(_settings);
         LoadSettingsIntoUi();
         RefreshProfiles();
-        Log("程序已启动。");
+        Log(Localization.T("Status.ProgramStarted"));
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -80,6 +82,8 @@ public partial class MainWindow : Window
 
     private void LoadSettingsIntoUi()
     {
+        Localization.SetLanguage(_settings.Language);
+        UpdateLanguageSelection();
         ImageRecognitionEnabledBox.IsChecked = _settings.ImageRecognitionEnabled;
         RecoilEnabledBox.IsChecked = _settings.RecoilEnabled;
         BreathHoldEnabledBox.IsChecked = _settings.BreathHoldEnabled;
@@ -107,9 +111,62 @@ public partial class MainWindow : Window
         TriggerSideKeyBox.SelectedIndex = TriggerSideKeyToIndex(_settings.TriggerSideKey);
         BreathHoldKeyBox.Text = _settings.BreathHoldKey;
         Cut31IntervalBox.Text = _settings.Cut31IntervalMs.ToString();
+        ApplyLanguage();
         StatusText.Text = AppSettings.SettingsSummary;
         ApplyRuntimeSettings();
         UpdateTrajectoryPreview();
+    }
+
+    private void UpdateLanguageSelection()
+    {
+        _isUpdatingLanguageSelection = true;
+        try
+        {
+            foreach (var item in LanguageBox.Items.OfType<System.Windows.Controls.ComboBoxItem>())
+            {
+                if (string.Equals(item.Tag?.ToString(), Localization.CurrentLanguage, StringComparison.OrdinalIgnoreCase))
+                {
+                    LanguageBox.SelectedItem = item;
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            _isUpdatingLanguageSelection = false;
+        }
+    }
+
+    private void ApplyLanguage()
+    {
+        Title = Localization.T("App.Title");
+        Localization.ApplyTo(this);
+        _statusOverlay.ApplyLanguage();
+        _imageDebugOverlay.ApplyLanguage();
+        UpdateTrajectoryPreview();
+    }
+
+    private void LanguageBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_isUpdatingLanguageSelection
+            || LanguageBox.SelectedItem is not System.Windows.Controls.ComboBoxItem item)
+        {
+            return;
+        }
+
+        var language = Localization.NormalizeLanguage(item.Tag?.ToString());
+        if (language == Localization.CurrentLanguage)
+        {
+            return;
+        }
+
+        Localization.SetLanguage(language);
+        _settings.Language = Localization.CurrentLanguage;
+        _settings.Save();
+        ApplyLanguage();
+        ApplyRuntimeSettings();
+        SetStatus(Localization.T("Status.LanguageChanged"));
+        Log(Localization.T("Status.LanguageChanged"));
     }
 
     private bool TryReadSettingsFromUi(out AppSettings settings)
@@ -119,33 +176,34 @@ public partial class MainWindow : Window
             || !TryReadInt(SearchY1Box.Text, "Y1", out var y1)
             || !TryReadInt(SearchX2Box.Text, "X2", out var x2)
             || !TryReadInt(SearchY2Box.Text, "Y2", out var y2)
-            || !TryReadInt(ToleranceBox.Text, "容差", out var tolerance)
-            || !TryReadInt(IntervalBox.Text, "间隔", out var interval)
-            || !TryReadInt(HitStreakBox.Text, "连续命中", out var hitStreak)
-            || !TryReadInt(ImageCooldownBox.Text, "图像冷却", out var imageCooldown)
-            || !TryReadInt(ColorPickOffsetXBox.Text, "取色偏移X", out var colorPickOffsetX)
-            || !TryReadInt(ColorPickOffsetYBox.Text, "取色偏移Y", out var colorPickOffsetY)
-            || !TryReadInt(FireRateBox.Text, "射速", out var fireRate)
-            || !TryReadInt(RecoilForceBox.Text, "垂直力度", out var recoilForce)
-            || !TryReadInt(HorizontalRecoilBox.Text, "水平力度", out var horizontalRecoil)
-            || !TryReadInt(Cut31IntervalBox.Text, "31间隔", out var cut31Interval))
+            || !TryReadInt(ToleranceBox.Text, Localization.T("Label.Tolerance"), out var tolerance)
+            || !TryReadInt(IntervalBox.Text, Localization.T("Label.Interval"), out var interval)
+            || !TryReadInt(HitStreakBox.Text, Localization.T("Label.HitStreak"), out var hitStreak)
+            || !TryReadInt(ImageCooldownBox.Text, Localization.T("Label.ImageCooldown"), out var imageCooldown)
+            || !TryReadInt(ColorPickOffsetXBox.Text, Localization.T("Label.PickOffsetX"), out var colorPickOffsetX)
+            || !TryReadInt(ColorPickOffsetYBox.Text, Localization.T("Label.PickOffsetY"), out var colorPickOffsetY)
+            || !TryReadInt(FireRateBox.Text, Localization.T("Label.FireRate"), out var fireRate)
+            || !TryReadInt(RecoilForceBox.Text, Localization.T("Label.VerticalForce"), out var recoilForce)
+            || !TryReadInt(HorizontalRecoilBox.Text, Localization.T("Label.HorizontalForce"), out var horizontalRecoil)
+            || !TryReadInt(Cut31IntervalBox.Text, Localization.T("Label.Cut31Interval"), out var cut31Interval))
         {
             return false;
         }
 
         if (!ColorUtilities.TryParseHexColor(TargetColorBox.Text, out var targetRgb))
         {
-            SetStatus("目标颜色格式无效，示例：0xFFFF00 或 FFFF00");
+            SetStatus(Localization.T("Error.InvalidTargetColor"));
             return false;
         }
 
-        if (!TryReadConfiguredKey(MasterHotkeyBox.Text, "总开关热键", KeySelectionMode.MasterHotkey, "PageDown", out var masterHotkey)
-            || !TryReadConfiguredKey(TriggerKeyBox.Text, "识别发送键", KeySelectionMode.KeyboardAndMouse, "X", out var triggerKey)
-            || !TryReadConfiguredKey(BreathHoldKeyBox.Text, "屏息键", KeySelectionMode.KeyboardAndMouse, "L", out var breathHoldKey))
+        if (!TryReadConfiguredKey(MasterHotkeyBox.Text, Localization.T("Label.MasterHotkey"), KeySelectionMode.MasterHotkey, "PageDown", out var masterHotkey)
+            || !TryReadConfiguredKey(TriggerKeyBox.Text, Localization.T("Label.TriggerKey"), KeySelectionMode.KeyboardAndMouse, "X", out var triggerKey)
+            || !TryReadConfiguredKey(BreathHoldKeyBox.Text, Localization.T("Label.BreathKey"), KeySelectionMode.KeyboardAndMouse, "L", out var breathHoldKey))
         {
             return false;
         }
 
+        settings.Language = Localization.CurrentLanguage;
         settings.ImageRecognitionEnabled = ImageRecognitionEnabledBox.IsChecked == true;
         settings.MasterHotkey = masterHotkey;
         settings.ImageRecognitionF2Enabled = _settings.ImageRecognitionF2Enabled;
@@ -182,16 +240,16 @@ public partial class MainWindow : Window
     private bool TryReadGeneralSettingsFromUi(out AppSettings settings)
     {
         settings = CloneSettings(_settings);
-        if (!TryReadInt(FireRateBox.Text, "射速", out var fireRate)
-            || !TryReadInt(RecoilForceBox.Text, "垂直力度", out var recoilForce)
-            || !TryReadInt(HorizontalRecoilBox.Text, "水平力度", out var horizontalRecoil)
-            || !TryReadInt(Cut31IntervalBox.Text, "31间隔", out var cut31Interval))
+        if (!TryReadInt(FireRateBox.Text, Localization.T("Label.FireRate"), out var fireRate)
+            || !TryReadInt(RecoilForceBox.Text, Localization.T("Label.VerticalForce"), out var recoilForce)
+            || !TryReadInt(HorizontalRecoilBox.Text, Localization.T("Label.HorizontalForce"), out var horizontalRecoil)
+            || !TryReadInt(Cut31IntervalBox.Text, Localization.T("Label.Cut31Interval"), out var cut31Interval))
         {
             return false;
         }
 
-        if (!TryReadConfiguredKey(MasterHotkeyBox.Text, "总开关热键", KeySelectionMode.MasterHotkey, "PageDown", out var masterHotkey)
-            || !TryReadConfiguredKey(BreathHoldKeyBox.Text, "屏息键", KeySelectionMode.KeyboardAndMouse, "L", out var breathHoldKey))
+        if (!TryReadConfiguredKey(MasterHotkeyBox.Text, Localization.T("Label.MasterHotkey"), KeySelectionMode.MasterHotkey, "PageDown", out var masterHotkey)
+            || !TryReadConfiguredKey(BreathHoldKeyBox.Text, Localization.T("Label.BreathKey"), KeySelectionMode.KeyboardAndMouse, "L", out var breathHoldKey))
         {
             return false;
         }
@@ -219,23 +277,23 @@ public partial class MainWindow : Window
             || !TryReadInt(SearchY1Box.Text, "Y1", out var y1)
             || !TryReadInt(SearchX2Box.Text, "X2", out var x2)
             || !TryReadInt(SearchY2Box.Text, "Y2", out var y2)
-            || !TryReadInt(ToleranceBox.Text, "容差", out var tolerance)
-            || !TryReadInt(IntervalBox.Text, "间隔", out var interval)
-            || !TryReadInt(HitStreakBox.Text, "连续命中", out var hitStreak)
-            || !TryReadInt(ImageCooldownBox.Text, "图像冷却", out var imageCooldown)
-            || !TryReadInt(ColorPickOffsetXBox.Text, "取色偏移X", out var colorPickOffsetX)
-            || !TryReadInt(ColorPickOffsetYBox.Text, "取色偏移Y", out var colorPickOffsetY))
+            || !TryReadInt(ToleranceBox.Text, Localization.T("Label.Tolerance"), out var tolerance)
+            || !TryReadInt(IntervalBox.Text, Localization.T("Label.Interval"), out var interval)
+            || !TryReadInt(HitStreakBox.Text, Localization.T("Label.HitStreak"), out var hitStreak)
+            || !TryReadInt(ImageCooldownBox.Text, Localization.T("Label.ImageCooldown"), out var imageCooldown)
+            || !TryReadInt(ColorPickOffsetXBox.Text, Localization.T("Label.PickOffsetX"), out var colorPickOffsetX)
+            || !TryReadInt(ColorPickOffsetYBox.Text, Localization.T("Label.PickOffsetY"), out var colorPickOffsetY))
         {
             return false;
         }
 
         if (!ColorUtilities.TryParseHexColor(TargetColorBox.Text, out var targetRgb))
         {
-            SetStatus("目标颜色格式无效，示例：0xFFFF00 或 FFFF00");
+            SetStatus(Localization.T("Error.InvalidTargetColor"));
             return false;
         }
 
-        if (!TryReadConfiguredKey(TriggerKeyBox.Text, "识别发送键", KeySelectionMode.KeyboardAndMouse, "X", out var triggerKey))
+        if (!TryReadConfiguredKey(TriggerKeyBox.Text, Localization.T("Label.TriggerKey"), KeySelectionMode.KeyboardAndMouse, "X", out var triggerKey))
         {
             return false;
         }
@@ -263,6 +321,7 @@ public partial class MainWindow : Window
     private static AppSettings CloneSettings(AppSettings source) => new()
     {
         MasterHotkey = source.MasterHotkey,
+        Language = Localization.NormalizeLanguage(source.Language),
         MasterEnabled = source.MasterEnabled,
         TriggerSideKey = source.TriggerSideKey,
         FireRate = source.FireRate,
@@ -301,7 +360,7 @@ public partial class MainWindow : Window
             return true;
         }
 
-        SetStatus($"{name} 要填整数");
+        SetStatus(Localization.Format("Error.IntRequired", Localization.TranslateLiteral(name)));
         return false;
     }
 
@@ -318,7 +377,7 @@ public partial class MainWindow : Window
             return true;
         }
 
-        SetStatus($"{name}无效，请重新选择");
+        SetStatus(Localization.Format("Error.InvalidKey", Localization.TranslateLiteral(name)));
         key = string.Empty;
         return false;
     }
@@ -334,9 +393,9 @@ public partial class MainWindow : Window
         _settings.Save();
         LoadSettingsIntoUi();
         RegisterHotkeys();
-        ShowButtonFeedback(SaveButton, "已保存");
-        SetStatus($"保存完成：{DateTime.Now:HH:mm:ss}");
-        Log("已保存。");
+        ShowButtonFeedback(SaveButton, Localization.T("Status.Saved"));
+        SetStatus(Localization.Format("Status.SaveComplete", DateTime.Now.ToString("HH:mm:ss")));
+        Log(Localization.T("Status.SavedLog"));
     }
 
     private void ReloadButton_Click(object sender, RoutedEventArgs e)
@@ -345,22 +404,22 @@ public partial class MainWindow : Window
         _runtime.ApplySettings(_settings);
         LoadSettingsIntoUi();
         RegisterHotkeys();
-        ShowButtonFeedback(ReloadButton, "已重载");
-        SetStatus($"重载完成：{DateTime.Now:HH:mm:ss}");
-        Log("已重载。");
+        ShowButtonFeedback(ReloadButton, Localization.T("Status.Reloaded"));
+        SetStatus(Localization.Format("Status.ReloadComplete", DateTime.Now.ToString("HH:mm:ss")));
+        Log(Localization.T("Status.ReloadedLog"));
     }
 
     private void SaveRecoilModuleButton_Click(object sender, RoutedEventArgs e) =>
-        SaveCurrentGeneralSettings("压枪已保存");
+        SaveCurrentGeneralSettings(Localization.T("Status.RecoilSaved"));
 
     private void SaveBreathModuleButton_Click(object sender, RoutedEventArgs e) =>
-        SaveCurrentGeneralSettings("屏息已保存");
+        SaveCurrentGeneralSettings(Localization.T("Status.BreathSaved"));
 
     private void SaveCut31ModuleButton_Click(object sender, RoutedEventArgs e) =>
-        SaveCurrentGeneralSettings("31切枪已保存");
+        SaveCurrentGeneralSettings(Localization.T("Status.Cut31Saved"));
 
     private void SaveImageModuleButton_Click(object sender, RoutedEventArgs e) =>
-        SaveCurrentImageSettings("识别已保存");
+        SaveCurrentImageSettings(Localization.T("Status.RecognitionSaved"));
 
     private void RefreshProfilesButton_Click(object sender, RoutedEventArgs e) => RefreshProfiles();
 
@@ -374,14 +433,14 @@ public partial class MainWindow : Window
         var name = GetProfileName(GeneralProfileBox);
         if (string.IsNullOrWhiteSpace(name))
         {
-            SetStatus("请输入通用档案名称");
+            SetStatus(Localization.T("Profile.EnterGeneral"));
             return;
         }
 
         _profiles.SaveGeneralProfile(name, settings);
         RefreshProfiles(name, null);
-        ShowButtonFeedback(SaveGeneralProfileButton, "已保存");
-        Log($"通用档案已保存：{name}");
+        ShowButtonFeedback(SaveGeneralProfileButton, Localization.T("Status.Saved"));
+        Log(Localization.Format("Profile.GeneralSaved", name));
     }
 
     private void LoadGeneralProfileButton_Click(object sender, RoutedEventArgs e)
@@ -389,13 +448,13 @@ public partial class MainWindow : Window
         var name = GetProfileName(GeneralProfileBox);
         if (string.IsNullOrWhiteSpace(name))
         {
-            SetStatus("请选择通用档案");
+            SetStatus(Localization.T("Profile.SelectGeneral"));
             return;
         }
 
         if (!_profiles.LoadGeneralProfile(name, _settings))
         {
-            SetStatus("通用档案不存在");
+            SetStatus(Localization.T("Profile.GeneralMissing"));
             return;
         }
 
@@ -404,8 +463,8 @@ public partial class MainWindow : Window
         LoadSettingsIntoUi();
         RegisterHotkeys();
         RefreshProfiles(name, null);
-        ShowButtonFeedback(LoadGeneralProfileButton, "已加载");
-        Log($"通用档案已加载：{name}");
+        ShowButtonFeedback(LoadGeneralProfileButton, Localization.T("Status.Loaded"));
+        Log(Localization.Format("Profile.GeneralLoaded", name));
     }
 
     private void DeleteGeneralProfileButton_Click(object sender, RoutedEventArgs e)
@@ -413,14 +472,14 @@ public partial class MainWindow : Window
         var name = GetProfileName(GeneralProfileBox);
         if (string.IsNullOrWhiteSpace(name))
         {
-            SetStatus("请选择通用档案");
+            SetStatus(Localization.T("Profile.SelectGeneral"));
             return;
         }
 
         _profiles.DeleteGeneralProfile(name);
         RefreshProfiles();
-        ShowButtonFeedback(DeleteGeneralProfileButton, "已删除");
-        Log($"通用档案已删除：{name}");
+        ShowButtonFeedback(DeleteGeneralProfileButton, Localization.T("Status.Deleted"));
+        Log(Localization.Format("Profile.GeneralDeleted", name));
     }
 
     private void SaveImageProfileButton_Click(object sender, RoutedEventArgs e)
@@ -433,14 +492,14 @@ public partial class MainWindow : Window
         var name = GetProfileName(ImageProfileBox);
         if (string.IsNullOrWhiteSpace(name))
         {
-            SetStatus("请输入图像识别档案名称");
+            SetStatus(Localization.T("Profile.EnterImage"));
             return;
         }
 
         _profiles.SaveImageRecognitionProfile(name, settings);
         RefreshProfiles(null, name);
-        ShowButtonFeedback(SaveImageProfileButton, "已保存");
-        Log($"图像识别档案已保存：{name}");
+        ShowButtonFeedback(SaveImageProfileButton, Localization.T("Status.Saved"));
+        Log(Localization.Format("Profile.ImageSaved", name));
     }
 
     private void LoadImageProfileButton_Click(object sender, RoutedEventArgs e)
@@ -448,13 +507,13 @@ public partial class MainWindow : Window
         var name = GetProfileName(ImageProfileBox);
         if (string.IsNullOrWhiteSpace(name))
         {
-            SetStatus("请选择图像识别档案");
+            SetStatus(Localization.T("Profile.SelectImage"));
             return;
         }
 
         if (!_profiles.LoadImageRecognitionProfile(name, _settings))
         {
-            SetStatus("图像识别档案不存在");
+            SetStatus(Localization.T("Profile.ImageMissing"));
             return;
         }
 
@@ -462,8 +521,8 @@ public partial class MainWindow : Window
         _runtime.ApplySettings(_settings);
         LoadSettingsIntoUi();
         RefreshProfiles(null, name);
-        ShowButtonFeedback(LoadImageProfileButton, "已加载");
-        Log($"图像识别档案已加载：{name}");
+        ShowButtonFeedback(LoadImageProfileButton, Localization.T("Status.Loaded"));
+        Log(Localization.Format("Profile.ImageLoaded", name));
     }
 
     private void DeleteImageProfileButton_Click(object sender, RoutedEventArgs e)
@@ -471,14 +530,14 @@ public partial class MainWindow : Window
         var name = GetProfileName(ImageProfileBox);
         if (string.IsNullOrWhiteSpace(name))
         {
-            SetStatus("请选择图像识别档案");
+            SetStatus(Localization.T("Profile.SelectImage"));
             return;
         }
 
         _profiles.DeleteImageRecognitionProfile(name);
         RefreshProfiles();
-        ShowButtonFeedback(DeleteImageProfileButton, "已删除");
-        Log($"图像识别档案已删除：{name}");
+        ShowButtonFeedback(DeleteImageProfileButton, Localization.T("Status.Deleted"));
+        Log(Localization.Format("Profile.ImageDeleted", name));
     }
 
     private void HelpButton_Click(object sender, RoutedEventArgs e)
@@ -520,7 +579,7 @@ public partial class MainWindow : Window
         var hotkeyName = ToHotkeyName(key);
         if (!KeySelectionCatalog.TryNormalize(hotkeyName, KeySelectionMode.MasterHotkey, out var normalizedName))
         {
-        SetStatus("总开关热键支持 PageDown、PageUp、Insert、Delete、Home、End、F1、F3-F12");
+            SetStatus(Localization.T("Error.MasterHotkeySupported"));
             e.Handled = true;
             return;
         }
@@ -531,13 +590,13 @@ public partial class MainWindow : Window
     }
 
     private void PickMasterHotkeyButton_Click(object sender, RoutedEventArgs e) =>
-        PickKey(MasterHotkeyBox, "选择总开关热键", KeySelectionMode.MasterHotkey);
+        PickKey(MasterHotkeyBox, Localization.T("Picker.MasterTitle"), KeySelectionMode.MasterHotkey);
 
     private void PickBreathHoldKeyButton_Click(object sender, RoutedEventArgs e) =>
-        PickKey(BreathHoldKeyBox, "选择屏息键", KeySelectionMode.KeyboardAndMouse);
+        PickKey(BreathHoldKeyBox, Localization.T("Picker.BreathTitle"), KeySelectionMode.KeyboardAndMouse);
 
     private void PickTriggerKeyButton_Click(object sender, RoutedEventArgs e) =>
-        PickKey(TriggerKeyBox, "选择识别发送键", KeySelectionMode.KeyboardAndMouse);
+        PickKey(TriggerKeyBox, Localization.T("Picker.TriggerTitle"), KeySelectionMode.KeyboardAndMouse);
 
     private void PickKey(System.Windows.Controls.TextBox target, string title, KeySelectionMode mode)
     {
@@ -560,7 +619,7 @@ public partial class MainWindow : Window
             var picker = new PixelPickerWindow();
             if (picker.ShowDialog() != true || picker.SelectedPixel is not { } pixel)
             {
-                SetStatus("已取消取色");
+                SetStatus(Localization.T("ColorPicker.Cancelled"));
                 return;
             }
 
@@ -568,17 +627,17 @@ public partial class MainWindow : Window
             var liveRgb = _screenCapture.GetPixelColor(pixel.X, pixel.Y);
             var liveHex = ColorUtilities.ToHex(liveRgb);
             ExtractedColorBox.Text = hex;
-            PickedColorBox.Text = $"{hex} @ {pixel.X},{pixel.Y} [放大镜]";
+            PickedColorBox.Text = $"{hex} @ {pixel.X},{pixel.Y} [{Localization.T("ColorPicker.Source")}]";
             SetStatus(liveRgb == pixel.Rgb
-                ? $"取色 {hex} @ {pixel.X},{pixel.Y}"
-                : $"取色 {hex}，实时 {liveHex}");
+                ? Localization.Format("ColorPicker.Status", hex, pixel.X, pixel.Y)
+                : Localization.Format("ColorPicker.StatusLive", hex, liveHex));
             Log(liveRgb == pixel.Rgb
-                ? $"取色：{hex} @ {pixel.X},{pixel.Y}"
-                : $"取色：{hex} @ {pixel.X},{pixel.Y}，实时读取 {liveHex}，不一致");
+                ? Localization.Format("ColorPicker.Log", hex, pixel.X, pixel.Y)
+                : Localization.Format("ColorPicker.LogLiveMismatch", hex, pixel.X, pixel.Y, liveHex));
         }
         catch (Exception ex)
         {
-            SetStatus("取色失败：" + ex.Message);
+            SetStatus(Localization.Format("ColorPicker.Failed", ex.Message));
             Log(ex.ToString());
         }
         finally
@@ -597,7 +656,7 @@ public partial class MainWindow : Window
 
         if (!ColorUtilities.TryParseHexColor(settings.TargetColor, out var targetRgb))
         {
-            SetStatus("目标颜色格式无效");
+            SetStatus(Localization.T("Error.TargetColorInvalidShort"));
             return;
         }
 
@@ -607,20 +666,20 @@ public partial class MainWindow : Window
             var result = _screenCapture.FindColor(region, targetRgb, settings.ColorTolerance);
             if (result is null)
             {
-                SearchResultBox.Text = "未命中";
-                SetStatus("未找到目标颜色");
-                Log($"未命中：目标 {settings.TargetColor}，容差 {settings.ColorTolerance}");
+                SearchResultBox.Text = Localization.T("Search.NoMatch");
+                SetStatus(Localization.T("Search.TargetNotFound"));
+                Log(Localization.Format("Search.NoMatchLog", settings.TargetColor, settings.ColorTolerance));
                 return;
             }
 
             var foundHex = ColorUtilities.ToHex(result.Rgb);
             SearchResultBox.Text = $"{foundHex} @ {result.X},{result.Y}";
-            SetStatus($"命中 {foundHex} @ {result.X},{result.Y}");
-            Log($"命中：{foundHex} @ {result.X},{result.Y}，目标 {settings.TargetColor}");
+            SetStatus(Localization.Format("Search.MatchStatus", foundHex, result.X, result.Y));
+            Log(Localization.Format("Search.MatchLog", foundHex, result.X, result.Y, settings.TargetColor));
         }
         catch (Exception ex)
         {
-            SetStatus("搜索失败：" + ex.Message);
+            SetStatus(Localization.Format("Search.Failed", ex.Message));
             Log(ex.ToString());
         }
     }
@@ -634,7 +693,7 @@ public partial class MainWindow : Window
 
         if (!ColorUtilities.TryParseHexColor(settings.TargetColor, out var targetRgb))
         {
-            SetStatus("目标颜色格式无效");
+            SetStatus(Localization.T("Error.TargetColorInvalidShort"));
             return;
         }
 
@@ -646,8 +705,8 @@ public partial class MainWindow : Window
             stopwatch.Stop();
             if (capture is null)
             {
-                SetStatus("诊断失败：区域无效");
-                Log($"诊断失败：区域无效 {region.Left},{region.Top}-{region.Right},{region.Bottom}");
+                SetStatus(Localization.T("Diagnose.InvalidRegion"));
+                Log(Localization.Format("Diagnose.InvalidRegionLog", region.Left, region.Top, region.Right, region.Bottom));
                 return;
             }
 
@@ -656,23 +715,32 @@ public partial class MainWindow : Window
             capture.Image.Save(imagePath, ImageFormat.Png);
 
             var hitText = analysis.FirstHit is null
-                ? "未命中"
-                : $"命中 {ColorUtilities.ToHex(analysis.FirstHit.Rgb)} @ {capture.Left + analysis.FirstHit.X},{capture.Top + analysis.FirstHit.Y}";
+                ? Localization.T("Search.NoMatch")
+                : Localization.Format("Search.MatchStatus", ColorUtilities.ToHex(analysis.FirstHit.Rgb), capture.Left + analysis.FirstHit.X, capture.Top + analysis.FirstHit.Y);
             var matchText = analysis.MatchCountCapped ? $"{analysis.MatchCount}+" : analysis.MatchCount.ToString();
-            SetStatus($"诊断：{hitText}，中心 {ColorUtilities.ToHex(analysis.CenterRgb)}");
-            Log(
-                $"诊断：区域 {capture.Left},{capture.Top}-{capture.Left + capture.Image.Width - 1},{capture.Top + capture.Image.Height - 1}，" +
-                $"大小 {capture.Image.Width}x{capture.Image.Height}，中心 {ColorUtilities.ToHex(analysis.CenterRgb)}，" +
-                $"采样色 {analysis.DistinctSampledColors}，匹配 {matchText}，截图 {stopwatch.Elapsed.TotalMilliseconds:0.0}ms，文件 {imagePath}");
+            SetStatus(Localization.Format("Diagnose.Status", hitText, ColorUtilities.ToHex(analysis.CenterRgb)));
+            Log(Localization.Format(
+                "Diagnose.Log",
+                capture.Left,
+                capture.Top,
+                capture.Left + capture.Image.Width - 1,
+                capture.Top + capture.Image.Height - 1,
+                capture.Image.Width,
+                capture.Image.Height,
+                ColorUtilities.ToHex(analysis.CenterRgb),
+                analysis.DistinctSampledColors,
+                matchText,
+                stopwatch.Elapsed.TotalMilliseconds,
+                imagePath));
 
             if (analysis.DistinctSampledColors <= 1)
             {
-                Log("诊断：区域几乎是单色。若游戏画面不是这样，说明当前截图没有读到游戏。");
+                Log(Localization.T("Diagnose.SolidRegion"));
             }
         }
         catch (Exception ex)
         {
-            SetStatus("诊断失败：" + ex.Message);
+            SetStatus(Localization.Format("Diagnose.Failed", ex.Message));
             Log(ex.ToString());
         }
     }
@@ -682,7 +750,7 @@ public partial class MainWindow : Window
         var picker = new RegionSelectionWindow { Owner = this };
         if (picker.ShowDialog() != true || picker.SelectedRegion is not { } region)
         {
-            SetStatus("已取消框选区域");
+            SetStatus(Localization.T("Region.Cancelled"));
             return;
         }
 
@@ -696,10 +764,10 @@ public partial class MainWindow : Window
             _settings = settings;
             _settings.Save();
             ApplyRuntimeSettings();
-            SetStatus($"区域已保存：{region.Left},{region.Top} - {region.Right},{region.Bottom}");
+            SetStatus(Localization.Format("Region.Saved", region.Left, region.Top, region.Right, region.Bottom));
         }
 
-        Log($"框选区域：{region.Width}x{region.Height} @ {region.Left},{region.Top}");
+        Log(Localization.Format("Region.Log", region.Width, region.Height, region.Left, region.Top));
     }
 
     private static CaptureAnalysis AnalyzeCapture(Bitmap bitmap, int targetRgb, int tolerance)
@@ -817,7 +885,7 @@ public partial class MainWindow : Window
         ApplyRuntimeSettings();
         RegisterHotkeys();
         LoadSettingsIntoUi();
-        SetStatus($"{message}：{DateTime.Now:HH:mm:ss}");
+        SetStatus(FormatTimedStatus(message));
         Log(message);
     }
 
@@ -833,7 +901,7 @@ public partial class MainWindow : Window
         ApplyRuntimeSettings();
         RegisterHotkeys();
         LoadSettingsIntoUi();
-        SetStatus($"{message}：{DateTime.Now:HH:mm:ss}");
+        SetStatus(FormatTimedStatus(message));
         Log(message);
     }
 
@@ -848,8 +916,14 @@ public partial class MainWindow : Window
         _settings.Save();
         ApplyRuntimeSettings();
         LoadSettingsIntoUi();
-        SetStatus($"{message}：{DateTime.Now:HH:mm:ss}");
+        SetStatus(FormatTimedStatus(message));
         Log(message);
+    }
+
+    private static string FormatTimedStatus(string message)
+    {
+        var separator = Localization.IsEnglish ? ": " : "：";
+        return $"{message}{separator}{DateTime.Now:HH:mm:ss}";
     }
 
     private async void ShowButtonFeedback(System.Windows.Controls.Button button, string doneText)
@@ -953,7 +1027,7 @@ public partial class MainWindow : Window
 
         NativeHotkeys.RegisterHotKey(hwnd, MasterHotkeyId, NativeHotkeys.ModNoRepeat, masterVk);
         NativeHotkeys.RegisterHotKey(hwnd, ImageHotkeyId, NativeHotkeys.ModNoRepeat, (uint)Forms.Keys.F2);
-        Log($"热键：{_settings.MasterHotkey} / F2");
+        Log(Localization.Format("Hotkey.Registered", _settings.MasterHotkey));
     }
 
     private void UnregisterHotkeys()
@@ -977,9 +1051,12 @@ public partial class MainWindow : Window
             _settings.MasterEnabled = _runtime.MasterEnabled;
             _settings.Save();
             ApplyRuntimeSettings();
-            SetStatus(_runtime.MasterEnabled ? "热键总开关：开" : "热键总开关：关");
-            ShowStateOverlay("热键总开关", _runtime.MasterEnabled ? "已开启" : "已关闭", _runtime.MasterEnabled);
-            Log(_runtime.MasterEnabled ? "热键总开关已开启。" : "热键总开关已关闭。");
+            SetStatus(_runtime.MasterEnabled ? Localization.T("Hotkey.MasterOnStatus") : Localization.T("Hotkey.MasterOffStatus"));
+            ShowStateOverlay(
+                Localization.T("Ui.MasterHotkey"),
+                _runtime.MasterEnabled ? Localization.T("Status.Enabled") : Localization.T("Status.Disabled"),
+                _runtime.MasterEnabled);
+            Log(_runtime.MasterEnabled ? Localization.T("Hotkey.MasterOn") : Localization.T("Hotkey.MasterOff"));
             handled = true;
         }
         else if (id == ImageHotkeyId)
@@ -987,9 +1064,12 @@ public partial class MainWindow : Window
             _settings.ImageRecognitionF2Enabled = !_settings.ImageRecognitionF2Enabled;
             _settings.Save();
             ApplyRuntimeSettings();
-            SetStatus(_settings.ImageRecognitionF2Enabled ? "图像识别：开(F2)" : "图像识别：关(F2)");
-            ShowStateOverlay("图像识别", _settings.ImageRecognitionF2Enabled ? "F2 开" : "F2 关", _settings.ImageRecognitionF2Enabled);
-            Log(_settings.ImageRecognitionF2Enabled ? "图像识别已开启。" : "图像识别已关闭。");
+            SetStatus(_settings.ImageRecognitionF2Enabled ? Localization.T("Image.F2OnStatus") : Localization.T("Image.F2OffStatus"));
+            ShowStateOverlay(
+                Localization.T("Ui.ImageRecognition"),
+                _settings.ImageRecognitionF2Enabled ? Localization.T("Image.F2OnDetail") : Localization.T("Image.F2OffDetail"),
+                _settings.ImageRecognitionF2Enabled);
+            Log(_settings.ImageRecognitionF2Enabled ? Localization.T("Image.Enabled") : Localization.T("Image.Disabled"));
             handled = true;
         }
 
@@ -1009,10 +1089,10 @@ public partial class MainWindow : Window
         RunOnUi(() =>
         {
             SearchResultBox.Text = $"{ColorUtilities.ToHex(e.Rgb)} @ {e.X},{e.Y}";
-            SetStatus($"识别命中 @ {e.X},{e.Y}，连续 {e.HitStreak}");
+            SetStatus(Localization.Format("Image.MatchStatus", e.X, e.Y, e.HitStreak));
             if (_settings.ImageDebug)
             {
-                Log($"识别命中：{ColorUtilities.ToHex(e.Rgb)} @ {e.X},{e.Y}，连续 {e.HitStreak}");
+                Log(Localization.Format("Image.MatchLog", ColorUtilities.ToHex(e.Rgb), e.X, e.Y, e.HitStreak));
             }
         });
     }
@@ -1042,7 +1122,9 @@ public partial class MainWindow : Window
     {
         if (IsImageRecognitionActive())
         {
-            _imageDebugOverlay.UpdateState("等待扫描", $"区域 {_settings.SearchX1},{_settings.SearchY1}-{_settings.SearchX2},{_settings.SearchY2}");
+            _imageDebugOverlay.UpdateState(
+                Localization.T("Ui.WaitingScan"),
+                Localization.Format("Image.WaitingDetail", _settings.SearchX1, _settings.SearchY1, _settings.SearchX2, _settings.SearchY2));
             if (!_imageDebugOverlay.IsVisible)
             {
                 _imageDebugOverlay.Show();
@@ -1062,12 +1144,12 @@ public partial class MainWindow : Window
         try
         {
             _inputHook.Start();
-            Log("输入监听已启动。");
+            Log(Localization.T("Input.HookStarted"));
         }
         catch (Exception ex)
         {
-            Log("输入监听启动失败：" + ex.Message);
-            SetStatus("输入监听失败，请用管理员身份运行。");
+            Log(Localization.Format("Input.HookFailed", ex.Message));
+            SetStatus(Localization.T("Input.HookFailedStatus"));
         }
     }
 
@@ -1211,8 +1293,8 @@ public partial class MainWindow : Window
         CanvasSetCenter(TrajectoryStartDot, startX, startY);
         CanvasSetCenter(TrajectoryEndDot, endPoint.X, endPoint.Y);
 
-        var patternText = pattern == 1 ? "左右交替" : "固定方向";
-        TrajectoryInfoText.Text = $"压枪路径 | 垂直: {vertical}  横向: {horizontal}  模式: {patternText}";
+        var patternText = pattern == 1 ? Localization.T("Trajectory.Alternating") : Localization.T("Trajectory.Fixed");
+        TrajectoryInfoText.Text = Localization.Format("Trajectory.Info", vertical, horizontal, patternText);
     }
 
     private static int ReadPreviewInt(string? text, int fallback) =>

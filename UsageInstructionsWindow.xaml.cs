@@ -7,6 +7,7 @@ public partial class UsageInstructionsWindow : Window
     public UsageInstructionsWindow()
     {
         InitializeComponent();
+        Localization.ApplyTo(this);
         UsageText.Text = UsageGuide.Text;
     }
 

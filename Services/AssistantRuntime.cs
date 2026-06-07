@@ -1,3 +1,5 @@
+using LegendaryCSharp;
+
 namespace LegendaryCSharp.Services;
 
 public sealed class AssistantRuntime
@@ -49,7 +51,7 @@ public sealed class AssistantRuntime
             }
         }
 
-        StatusChanged?.Invoke(this, MasterEnabled ? "热键总开关已开启。" : "热键总开关已关闭。");
+        StatusChanged?.Invoke(this, MasterEnabled ? Localization.T("Hotkey.MasterOn") : Localization.T("Hotkey.MasterOff"));
     }
 
     public void HandleMouseButton(GlobalMouseButton button, bool isDown)
@@ -116,7 +118,7 @@ public sealed class AssistantRuntime
             _input.TapKey("3");
             await Task.Delay(10);
             _input.TapKey("1");
-            StatusChanged?.Invoke(this, "31切枪完成。");
+            StatusChanged?.Invoke(this, Localization.T("Runtime.Cut31Done"));
         });
     }
 
@@ -185,7 +187,7 @@ public sealed class AssistantRuntime
     {
         try
         {
-            StatusChanged?.Invoke(this, "压枪开始。");
+            StatusChanged?.Invoke(this, Localization.T("Runtime.RecoilStart"));
 
             while (ShouldRecoilRun())
             {
@@ -204,7 +206,7 @@ public sealed class AssistantRuntime
             Interlocked.Exchange(ref _shotCount, 0);
             _semiAuto.ReleaseIfNeeded();
 
-            StatusChanged?.Invoke(this, "压枪结束。");
+            StatusChanged?.Invoke(this, Localization.T("Runtime.RecoilEnd"));
         }
     }
 
@@ -212,7 +214,7 @@ public sealed class AssistantRuntime
     {
         try
         {
-            StatusChanged?.Invoke(this, "半自动开始。");
+            StatusChanged?.Invoke(this, Localization.T("Runtime.SemiAutoStart"));
 
             while (ShouldSemiAutoRun())
             {
@@ -228,7 +230,7 @@ public sealed class AssistantRuntime
             Interlocked.Exchange(ref _semiAutoLoopActive, 0);
             _semiAuto.ReleaseIfNeeded();
 
-            StatusChanged?.Invoke(this, "半自动结束。");
+            StatusChanged?.Invoke(this, Localization.T("Runtime.SemiAutoEnd"));
         }
     }
 

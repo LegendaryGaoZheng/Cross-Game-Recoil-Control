@@ -14,11 +14,12 @@ public partial class KeyPickerWindow : Window
         Title = title;
         TitleText.Text = title;
         HintText.Text = mode == KeySelectionMode.MasterHotkey
-            ? "总开关只能用键盘热键。"
-            : "可选键盘键或鼠标键。";
-        CurrentKeyText.Text = $"当前：{currentKey}";
+            ? Localization.T("Picker.MasterHint")
+            : Localization.T("Picker.KeyMouseHint");
+        CurrentKeyText.Text = $"{Localization.T("Ui.CurrentKey")}{currentKey}";
         SelectedKey = currentKey;
         BuildKeyButtons();
+        Localization.ApplyTo(this);
     }
 
     public string SelectedKey { get; private set; }

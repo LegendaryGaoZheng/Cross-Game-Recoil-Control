@@ -1,8 +1,11 @@
-# Legendary压枪助手 - 更新日志
+# Legendary压枪助手 - 更新日志 / Legendary Recoil Assistant - Changelog
 
 <img src="images/logo.jpg" width="100%" />
 
-本文档记录 Legendary压枪助手 主要发布版本的更新历史。
+本文档记录 Legendary压枪助手 主要发布版本的更新历史。English version is available in the second half of this README.
+
+- [中文说明](#使用教程)
+- [English README](#english-readme)
 
 ## 使用教程
 
@@ -19,7 +22,8 @@
 3. 程序启动后：
    - `PageDown`：切换热键辅助总开关。
    - `F2`：切换图像识别独立开关。
-   - 右上角“使用说明”可查看当前版本内置说明。
+   - 右上角可选择 `中文` / `English`，语言选择会保存到配置。
+   - 右上角“使用说明 / Guide”可查看当前版本内置说明。
 
 ### 从源码生成执行文件
 
@@ -55,6 +59,11 @@ C:\Users\Legen\Desktop\LegendaryCSharp\bin\Release\net10.0-windows\win-x64\publi
 > v3.1.2 是 v3.1.1 之后的小幅体验修正版，主要整理开关逻辑、弹道预览和识别参数交互。
 
 ### 本次更新
+
+- **中英双语界面**：
+  - 主窗口右上角新增语言选择，可在 `中文` / `English` 之间切换。
+  - 主界面标签、按钮、状态栏、日志提示、按键选择窗口、取色/框选窗口、调试浮窗和内置使用说明跟随语言切换。
+  - 语言选择写入主配置，下次启动自动沿用。
 
 - **弹道预览调整**：
   - 弹道预览改为显示实际压枪移动路径。
@@ -200,8 +209,10 @@ LegendaryCSharp.image-recognition.json
 ### 维护说明
 
 - 程序内说明维护在 `UsageGuide.cs`。
+- 中英双语界面文字和运行提示维护在 `Localization.cs`。
 - 修改功能、按钮、配置项、热键、触发逻辑或数据位置时，需要同步更新：
   - `UsageGuide.cs`
+  - `Localization.cs`
   - `README.md`
 
 ---
@@ -350,3 +361,221 @@ Legendary压枪助手是一款专业的游戏鼠标压枪辅助工具，专为FP
 - 内存: 2GB 或更高
 - 权限: 需要管理员权限运行
 - 鼠标: 推荐带有侧键的游戏鼠标
+
+---
+
+# English README
+
+This document records the major release history of Legendary Recoil Assistant. The Chinese version remains the primary historical record; this English section mirrors the current usage instructions and release notes so GitHub visitors can understand the project more easily.
+
+## Usage Guide
+
+- [Full Usage Guide](docs/usage-guide.md)
+- Tutorial screenshots are stored in [docs/images](docs/images).
+- A PDF version is better published as a GitHub Releases attachment. The repository keeps the Markdown guide for easier reading, searching, and maintenance.
+
+## How To Use
+
+### Run The Release Build
+
+1. Download or copy `Legendary游戏助手v3.1.2.exe` to any folder.
+2. Right-click the `.exe` file and choose **Run as administrator**.
+3. After launch:
+   - `PageDown`: toggles the hotkey-assisted features.
+   - `F2`: toggles image recognition independently.
+   - Use the top-right `中文` / `English` selector to switch the UI language. The selection is saved.
+   - The top-right `使用说明 / Guide` button opens the built-in guide for the current version.
+
+### Build The Executable From Source
+
+1. Install .NET SDK 10.0 or newer.
+2. Open PowerShell and enter the project folder:
+
+```powershell
+cd C:\Users\Legen\Desktop\LegendaryCSharp
+```
+
+3. Build check:
+
+```powershell
+dotnet build
+```
+
+4. Publish a Windows x64 single-file release build:
+
+```powershell
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+```
+
+5. The generated executable is located at:
+
+```text
+C:\Users\Legen\Desktop\LegendaryCSharp\bin\Release\net10.0-windows\win-x64\publish\LegendaryCSharp.exe
+```
+
+---
+
+## [v3.1.2]
+
+> v3.1.2 is a small usability-focused update after v3.1.1. It mainly cleans up switch logic, trajectory preview behavior, image recognition controls, profile button feedback, and bilingual UI support.
+
+### Changes
+
+- **Bilingual UI**:
+  - Added a top-right language selector for `中文` / `English`.
+  - Main labels, buttons, status bar, log messages, key picker, color picker, region selector, debug overlays, and the built-in guide follow the selected language.
+  - The language setting is saved in the main configuration and reused on the next launch.
+
+- **Trajectory Preview Update**:
+  - The preview now shows the actual recoil movement path.
+  - Fixed direction accumulates the configured horizontal and vertical movement.
+  - Alternating mode displays the left-right alternating path.
+
+- **Independent Image Recognition Switch**:
+  - The hotkey master only affects hotkey-assisted features such as recoil, breath hold, semi-auto, and 31 swap.
+  - Image recognition no longer requires the hotkey master to be enabled. It only depends on `Auto Trigger` and `F2`.
+
+- **Simplified Target Color Logic**:
+  - Removed the redundant `Use Target Color` checkbox.
+  - Image recognition always uses the value in `Target Color`. Picked colors still need to be copied manually into the target color field.
+
+- **Naming Sync**:
+  - The overview label `半自动随压枪` was changed back to `半自动`.
+  - Program title, built-in guide, and project version are synced to `v3.1.2`.
+
+- **Profile Button Feedback Fix**:
+  - Fixed the issue where loading a profile could leave the button stuck as `已加载 / Loaded` and unclickable.
+
+---
+
+## [v3.1.1]
+
+> v3.1.1 is the formal C# / WPF migration release from the older AutoHotkey v2 script. The focus is not a direct copy of the old script, but a cleaner Windows desktop application with separated UI, settings, input handling, image recognition, and runtime logic.
+
+### Major Update: Migration From AHK To C# / WPF
+
+- **From script to standalone desktop app**:
+  - The old version depended on `.ahk` files and the AutoHotkey v2 runtime.
+  - The new version is rewritten in C# / WPF and can be published as a standalone `.exe`.
+  - Single-file, self-contained publishing is supported, so users do not need to install AutoHotkey.
+
+- **UI migrated to WPF**:
+  - The main UI moved from AHK GUI to a WPF window.
+  - Features are organized into pages such as recoil, image recognition, profiles, logs, and guide.
+  - The top-right guide button opens instructions maintained with the program.
+  - Status bar, debug overlay, and trajectory preview are easier to extend.
+
+- **Input logic modularized**:
+  - Global hotkeys use Win32 `RegisterHotKey`.
+  - Mouse listening uses a low-level mouse hook.
+  - Keyboard input, mouse clicks, and mouse movement are wrapped by `InputService`.
+  - Recoil, breath hold, semi-auto, and 31 swap runtime logic are moved into `AssistantRuntime` instead of being kept in one large script.
+
+- **Settings system rebuilt**:
+  - The old INI settings were migrated to JSON.
+  - General settings and image recognition settings are saved separately:
+    - `LegendaryCSharp.settings.json`
+    - `LegendaryCSharp.image-recognition.json`
+  - Profiles are separated into general profiles and image recognition profiles.
+  - Profiles are saved under `%AppData%\Legendary\Profiles` instead of cluttering the exe folder.
+  - Legacy `Profiles` folders beside old releases are read and migrated automatically.
+
+### Image Recognition Module
+
+- **From AHK PixelSearch to C# screenshot color search**:
+  - Uses GDI to capture the selected screen region.
+  - Uses `LockBits` to read bitmap memory.
+  - Compares RGB channels against the configured target color and tolerance.
+
+- **Search region optimization**:
+  - The old logic could scan overly large areas.
+  - The new version captures only the selected region. Smaller regions reduce scan cost.
+  - High-DPI coordinate conversion is supported to reduce offset issues on scaled displays.
+
+- **Color picking improvements**:
+  - Added a magnifier window.
+  - A red box marks the actual picked pixel.
+  - Picked colors are placed in a separate field first and do not overwrite `Target Color` automatically.
+  - Live read values are logged after picking, which helps confirm whether the current screen is being read correctly.
+
+- **Recognition diagnostics**:
+  - Added the `Diagnose` button.
+  - Diagnosis saves the actual captured search area as `image-diagnostic.png`.
+  - Logs include center color, sampled color count, match count, and first match point.
+  - If the diagnostic image is black, stale, or not the expected region, the capture method is not reading the target screen correctly.
+
+### Performance Optimizations
+
+- **Scanning thread optimization**:
+  - Image recognition scanning moved away from the UI thread.
+  - Low-interval scanning no longer blocks the window or foreground application through UI-thread pressure.
+
+- **Screenshot allocation optimization**:
+  - Reuses same-size `Bitmap` / `Graphics` objects during color search.
+  - Reduces GC pressure caused by creating new objects every scan.
+
+- **Pixel comparison optimization**:
+  - Replaced per-pixel helper calls with direct RGB range comparison.
+  - Reduces temporary calculations in high-frequency scanning.
+
+- **Reduced UI refresh pressure**:
+  - Match results, debug overlays, and miss states are not refreshed on every scan.
+  - Trigger checks still follow the scan interval.
+  - The debug overlay no longer shows a meaningless scan counter and only keeps status and region info.
+
+- **Log performance optimization**:
+  - The log box has a maximum retained line count.
+  - Long sessions will not slow the UI because of an oversized log text buffer.
+
+- **Input listener load reduction**:
+  - The keyboard global hook is not installed when no keyboard listener is needed.
+  - Background listener overhead is lower.
+
+### Current Feature Set
+
+- `PageDown` hotkey master.
+- `F2` independent image recognition switch.
+- Side trigger + left click recoil.
+- Breath hold.
+- Semi-auto mode.
+- Mouse wheel down 31 swap.
+- Trajectory preview.
+- General and image recognition profile save / load / delete.
+- Bilingual Chinese / English UI and guide.
+
+### Data Locations
+
+- Main configuration files beside the exe:
+
+```text
+LegendaryCSharp.settings.json
+LegendaryCSharp.image-recognition.json
+```
+
+- Profiles are saved under:
+
+```text
+%AppData%\Legendary\Profiles
+```
+
+### Maintenance Notes
+
+- Built-in guide text is maintained in `UsageGuide.cs`.
+- Bilingual UI strings and runtime messages are maintained in `Localization.cs`.
+- When changing features, buttons, settings, hotkeys, trigger logic, or data locations, update:
+  - `UsageGuide.cs`
+  - `Localization.cs`
+  - `README.md`
+
+---
+
+## Legacy AHK Release Notes
+
+The older releases below document the AutoHotkey-era history of the project:
+
+- **v2.4.9**: reorganized the main GUI into hotkey assist and image recognition sections; split profile sections; improved breath hold, semi-auto, image recognition parameters, and trajectory preview.
+- **v2.4.6**: introduced automatic pixel-search image recognition with a triple-switch model and right-click color picking.
+- **v2.3.9**: added 31 swap, mouse wheel pass-through, recoil loop throttling, safer cleanup logic, and master-switch behavior changes.
+- **v2.3.3**: improved layout, added a guide button, restored/enhanced trajectory preview, added configurable breath-hold key, and fixed semi-auto timing.
+- **v2.2.6**: fixed semi-auto binding and disabled-state click conflicts; added customizable hotkeys.
+- **v2.1.3**: early feature baseline with recoil, semi-auto, compensation settings, breath hold, profiles, and hotkey control.

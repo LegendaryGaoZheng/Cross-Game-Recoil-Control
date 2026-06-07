@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using LegendaryCSharp;
 
 namespace LegendaryCSharp.Services;
 
@@ -60,7 +61,7 @@ public sealed class GlobalInputHook : IDisposable
             _mouseHook = SetWindowsHookEx(WhMouseLl, _mouseProc, GetModuleHandle(null), 0);
             if (_mouseHook == IntPtr.Zero)
             {
-                throw new Win32Exception(Marshal.GetLastWin32Error(), "全局鼠标监听启动失败");
+                throw new Win32Exception(Marshal.GetLastWin32Error(), Localization.T("Input.MouseHookStartFailed"));
             }
         }
 
@@ -71,7 +72,7 @@ public sealed class GlobalInputHook : IDisposable
             {
                 UnhookWindowsHookEx(_mouseHook);
                 _mouseHook = IntPtr.Zero;
-                throw new Win32Exception(Marshal.GetLastWin32Error(), "全局键盘监听启动失败");
+                throw new Win32Exception(Marshal.GetLastWin32Error(), Localization.T("Input.KeyboardHookStartFailed"));
             }
         }
     }

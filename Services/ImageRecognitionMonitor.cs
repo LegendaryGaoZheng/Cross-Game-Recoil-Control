@@ -1,4 +1,5 @@
 using System.Drawing;
+using LegendaryCSharp;
 
 namespace LegendaryCSharp.Services;
 
@@ -117,7 +118,10 @@ public sealed class ImageRecognitionMonitor
             _lastY = result.Y;
             var now = DateTime.UtcNow;
             PublishMatch(plan, result);
-            PublishDebug(plan, "命中", $"{ColorUtilities.ToHex(result.Rgb)} @ {result.X},{result.Y} | 连续 {_hitStreak}/{plan.HitStreakRequired}");
+            PublishDebug(
+                plan,
+                Localization.T("ImageDebug.Match"),
+                Localization.Format("ImageDebug.MatchDetail", ColorUtilities.ToHex(result.Rgb), result.X, result.Y, _hitStreak, plan.HitStreakRequired));
 
             if (_hitStreak < plan.HitStreakRequired)
             {
@@ -136,8 +140,8 @@ public sealed class ImageRecognitionMonitor
         catch (Exception ex)
         {
             Stop();
-            PublishDebug("已停止", ex.Message);
-            StatusChanged?.Invoke(this, "图像识别已停止：" + ex.Message);
+            PublishDebug(Localization.T("ImageDebug.Stopped"), ex.Message);
+            StatusChanged?.Invoke(this, Localization.Format("Image.StatusStopped", ex.Message));
         }
         finally
         {
@@ -157,34 +161,34 @@ public sealed class ImageRecognitionMonitor
         {
             case ImageTriggerMode.Down:
                 _input.KeyDown(key);
-                PublishDebug(plan, "触发", $"按下 {key}");
-                StatusChanged?.Invoke(this, $"图像识别触发：按下 {key}");
+                PublishDebug(plan, Localization.T("ImageDebug.Trigger"), Localization.Format("ImageTrigger.Down", key));
+                StatusChanged?.Invoke(this, Localization.Format("ImageTrigger.StatusDown", key));
                 break;
             case ImageTriggerMode.Up:
                 _input.KeyUp(key);
-                PublishDebug(plan, "触发", $"抬起 {key}");
-                StatusChanged?.Invoke(this, $"图像识别触发：抬起 {key}");
+                PublishDebug(plan, Localization.T("ImageDebug.Trigger"), Localization.Format("ImageTrigger.Up", key));
+                StatusChanged?.Invoke(this, Localization.Format("ImageTrigger.StatusUp", key));
                 break;
             case ImageTriggerMode.Auto:
                 if (_input.IsKeyDown(key))
                 {
                     _input.KeyUp(key);
-                    PublishDebug(plan, "触发", $"抬起 {key}");
-                    StatusChanged?.Invoke(this, $"图像识别触发：抬起 {key}");
+                    PublishDebug(plan, Localization.T("ImageDebug.Trigger"), Localization.Format("ImageTrigger.Up", key));
+                    StatusChanged?.Invoke(this, Localization.Format("ImageTrigger.StatusUp", key));
                 }
                 else
                 {
                     _input.TapKey(key);
-                    PublishDebug(plan, "触发", $"点击 {key}");
-                    StatusChanged?.Invoke(this, $"图像识别触发：点击 {key}");
+                    PublishDebug(plan, Localization.T("ImageDebug.Trigger"), Localization.Format("ImageTrigger.Tap", key));
+                    StatusChanged?.Invoke(this, Localization.Format("ImageTrigger.StatusTap", key));
                 }
 
                 break;
             case ImageTriggerMode.Tap:
             default:
                 _input.TapKey(key);
-                PublishDebug(plan, "触发", $"点击 {key}");
-                StatusChanged?.Invoke(this, $"图像识别触发：点击 {key}");
+                PublishDebug(plan, Localization.T("ImageDebug.Trigger"), Localization.Format("ImageTrigger.Tap", key));
+                StatusChanged?.Invoke(this, Localization.Format("ImageTrigger.StatusTap", key));
                 break;
         }
     }
@@ -235,7 +239,9 @@ public sealed class ImageRecognitionMonitor
         }
 
         _lastMissDebugUtc = now;
-        PublishDebug("扫描中", $"未命中 | 区域 {plan.Region.Left},{plan.Region.Top}-{plan.Region.Right},{plan.Region.Bottom}");
+        PublishDebug(
+            Localization.T("ImageDebug.Scanning"),
+            Localization.Format("ImageDebug.NoMatchDetail", plan.Region.Left, plan.Region.Top, plan.Region.Right, plan.Region.Bottom));
     }
 
     private void PublishState(string message)
@@ -270,17 +276,17 @@ public sealed class ImageRecognitionMonitor
         {
             if (!settings.ImageRecognitionEnabled)
             {
-                return Stopped("识别未启动：自动触发未勾选");
+                return Stopped(Localization.T("Image.PlanAutoOff"));
             }
 
             if (!settings.ImageRecognitionF2Enabled)
             {
-                return Stopped("识别未启动：F2 关");
+                return Stopped(Localization.T("Image.PlanF2Off"));
             }
 
             if (!ColorUtilities.TryParseHexColor(settings.TargetColor, out var targetRgb))
             {
-                return Stopped("识别未启动：目标颜色格式无效");
+                return Stopped(Localization.T("Image.PlanInvalidColor"));
             }
 
             var intervalMs = Math.Clamp(settings.SearchIntervalMs, 20, 2000);
@@ -288,7 +294,7 @@ public sealed class ImageRecognitionMonitor
             var region = Rectangle.FromLTRB(settings.SearchX1, settings.SearchY1, settings.SearchX2, settings.SearchY2);
             return new ImageScanPlan(
                 true,
-                $"识别扫描中：区域 {settings.SearchX1},{settings.SearchY1}-{settings.SearchX2},{settings.SearchY2}，目标 {targetHex}，{intervalMs}ms",
+                Localization.Format("Image.PlanScanning", settings.SearchX1, settings.SearchY1, settings.SearchX2, settings.SearchY2, targetHex, intervalMs),
                 region,
                 targetRgb,
                 Math.Clamp(settings.ColorTolerance, 0, 255),

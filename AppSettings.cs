@@ -7,6 +7,7 @@ public sealed class AppSettings
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
+    public string Language { get; set; } = Localization.Chinese;
     public string MasterHotkey { get; set; } = "PageDown";
     public bool MasterEnabled { get; set; } = true;
     public string TriggerSideKey { get; set; } = "XButton2";
@@ -47,7 +48,7 @@ public sealed class AppSettings
         Path.Combine(AppContext.BaseDirectory, "LegendaryCSharp.image-recognition.json");
 
     public static string SettingsSummary =>
-        "配置已加载";
+        Localization.T("Status.ConfigLoaded");
 
     public static AppSettings Load()
     {
@@ -123,6 +124,7 @@ public sealed class AppSettings
     public sealed class MainSettingsDocument
     {
         public string MasterHotkey { get; set; } = "PageDown";
+        public string Language { get; set; } = Localization.Chinese;
         public bool MasterEnabled { get; set; } = true;
         public string TriggerSideKey { get; set; } = "XButton2";
         public int FireRate { get; set; } = 600;
@@ -139,6 +141,7 @@ public sealed class AppSettings
         public static MainSettingsDocument From(AppSettings settings) => new()
         {
             MasterHotkey = settings.MasterHotkey,
+            Language = Localization.NormalizeLanguage(settings.Language),
             MasterEnabled = settings.MasterEnabled,
             TriggerSideKey = settings.TriggerSideKey,
             FireRate = settings.FireRate,
@@ -156,6 +159,7 @@ public sealed class AppSettings
         public void ApplyTo(AppSettings settings)
         {
             settings.MasterHotkey = MasterHotkey;
+            settings.Language = Localization.NormalizeLanguage(Language);
             settings.MasterEnabled = MasterEnabled;
             settings.TriggerSideKey = TriggerSideKey;
             settings.FireRate = FireRate;
