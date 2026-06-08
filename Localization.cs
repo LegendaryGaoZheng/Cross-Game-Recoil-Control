@@ -111,11 +111,11 @@ public static class Localization
 
     private static readonly Dictionary<string, LocalizedText> Strings = new()
     {
-        ["App.Title"] = new("Legendary v3.1.2", "Legendary v3.1.2"),
+        ["App.Title"] = new("Legendary v3.1.5", "Legendary v3.1.5"),
         ["App.Subtitle"] = new("热键、压枪、屏息、切枪、图像识别", "Hotkeys, recoil, breath hold, quick swap, image recognition"),
         ["Ui.Language"] = new("语言", "Language"),
         ["Ui.Help"] = new("使用说明", "Guide"),
-        ["Ui.HelpTitle"] = new("使用说明 v3.1.2", "Usage Guide v3.1.2"),
+        ["Ui.HelpTitle"] = new("使用说明 v3.1.5", "Usage Guide v3.1.5"),
         ["Ui.SaveAll"] = new("保存全部", "Save All"),
         ["Ui.Reload"] = new("重载", "Reload"),
         ["Ui.Close"] = new("关闭", "Close"),

@@ -1,4 +1,4 @@
-# Legendary v3.1.2 使用教程
+# Legendary v3.1.5 使用教程
 
 本文档是项目的主使用教程。README 继续保留版本更新记录，这里集中说明每个功能怎么配置、怎么保存、怎么排查。
 
@@ -36,6 +36,7 @@ bin\Release\net10.0-windows\win-x64\publish\LegendaryCSharp.exe
 
 - 切换后，主界面按钮、标签、状态栏、日志提示、按键选择窗口、取色/框选窗口、调试浮窗和内置使用说明会跟随刷新。
 - 语言选择会保存到主配置 `LegendaryCSharp.settings.json`，下次启动继续使用。
+- v3.1.5 起，加载通用档案不会再覆盖当前语言；语言只作为全局界面偏好保存。
 - 后续如果新增按钮、配置项、状态提示或错误提示，需要同步补充 `Localization.cs` 和 `UsageGuide.cs`。
 
 程序会在 exe 同目录保存当前配置：
@@ -414,7 +415,7 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 
 ### 加载档案后按钮变成“已加载”且不能点
 
-v3.1.2 后续修复版已处理这个问题。按钮反馈只会短暂变色，不会永久禁用。
+v3.1.5 已处理这个问题。按钮反馈只会短暂变色，不会永久禁用。
 
 ### GitHub 上为什么没有 exe
 
@@ -431,7 +432,7 @@ obj/
 
 ---
 
-# Legendary v3.1.2 Usage Guide
+# Legendary v3.1.5 Usage Guide
 
 This is the main usage guide for the project. The README keeps the release history, while this document focuses on configuration, saving, and troubleshooting.
 
@@ -469,6 +470,7 @@ The top-right corner of the main window has a language selector. You can switch 
 
 - After switching, main labels, buttons, status bar, log messages, key picker, color picker, region selector, debug overlays, and the built-in guide follow the selected language.
 - The language selection is saved to `LegendaryCSharp.settings.json` and reused next time.
+- Starting with v3.1.5, loading a general profile no longer overwrites the current language. Language is saved only as a global UI preference.
 - When adding new buttons, settings, status messages, or error messages later, update `Localization.cs` and `UsageGuide.cs` together.
 
 The program saves current configuration beside the exe:
@@ -849,7 +851,7 @@ Search Region: As small as practical
 
 ### After Loading A Profile, The Button Gets Stuck As Loaded
 
-This has been fixed in the v3.1.2 follow-up patch. Button feedback only changes color briefly and does not permanently disable the button.
+This has been fixed in v3.1.5. Button feedback only changes color briefly and does not permanently disable the button.
 
 ### Why There Is No Exe On GitHub
 

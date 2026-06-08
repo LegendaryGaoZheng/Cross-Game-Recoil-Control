@@ -17,7 +17,7 @@
 
 ### 直接运行发行版
 
-1. 下载或复制 `Legendary游戏助手v3.1.2.exe` 到任意目录。
+1. 下载或复制 `Legendary游戏助手v3.1.5.exe` 到任意目录。
 2. 右键该 `.exe` 文件：**以管理员身份运行**。
 3. 程序启动后：
    - `PageDown`：切换热键辅助总开关。
@@ -51,6 +51,27 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 ```text
 C:\Users\Legen\Desktop\LegendaryCSharp\bin\Release\net10.0-windows\win-x64\publish\LegendaryCSharp.exe
 ```
+
+---
+
+## [v3.1.5]
+
+> v3.1.5 是 v3.1.2 之后的小幅修正版，重点是版本同步、配置稳定性和中英双语文档补齐。
+
+### 本次更新
+
+- **配置 bug 修复**：
+  - 修复“通用档案”加载时可能覆盖界面语言的问题。
+  - 语言现在作为全局界面偏好保存，不再跟随单个档案切换。
+  - 主配置仍会保存语言，重启后继续沿用上次选择。
+
+- **版本同步**：
+  - 程序标题、程序集版本、文件版本、产品名和内置使用说明同步为 `v3.1.5`。
+  - 使用教程标题同步为 `Legendary v3.1.5`。
+
+- **中英双语文档**：
+  - README 新增完整英文说明，保留中文版本记录。
+  - `docs/usage-guide.md` 新增完整英文教程镜像，方便 GitHub 访客阅读。
 
 ---
 
@@ -378,7 +399,7 @@ This document records the major release history of Legendary Recoil Assistant. T
 
 ### Run The Release Build
 
-1. Download or copy `Legendary游戏助手v3.1.2.exe` to any folder.
+1. Download or copy `Legendary游戏助手v3.1.5.exe` to any folder.
 2. Right-click the `.exe` file and choose **Run as administrator**.
 3. After launch:
    - `PageDown`: toggles the hotkey-assisted features.
@@ -412,6 +433,27 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 ```text
 C:\Users\Legen\Desktop\LegendaryCSharp\bin\Release\net10.0-windows\win-x64\publish\LegendaryCSharp.exe
 ```
+
+---
+
+## [v3.1.5]
+
+> v3.1.5 is a small patch after v3.1.2. It focuses on version synchronization, configuration stability, and complete bilingual documentation.
+
+### Changes
+
+- **Configuration bug fix**:
+  - Fixed an issue where loading a general profile could overwrite the current UI language.
+  - Language is now treated as a global UI preference instead of a per-profile setting.
+  - The main configuration still saves the selected language and restores it after restart.
+
+- **Version synchronization**:
+  - Program title, assembly version, file version, product name, and built-in guide are synced to `v3.1.5`.
+  - Usage guide titles are synced to `Legendary v3.1.5`.
+
+- **Bilingual documentation**:
+  - README now includes a full English section while preserving the Chinese release history.
+  - `docs/usage-guide.md` now includes a full English guide mirror for GitHub visitors.
 
 ---
 

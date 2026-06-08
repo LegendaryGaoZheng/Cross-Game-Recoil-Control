@@ -45,7 +45,7 @@ public sealed class ProfileStore
                 return false;
             }
 
-            document.ApplyTo(settings);
+            document.ApplyTo(settings, applyLanguage: false);
             return true;
         }
 
@@ -54,7 +54,7 @@ public sealed class ProfileStore
             return false;
         }
 
-        AppSettings.MainSettingsDocument.From(legacy).ApplyTo(settings);
+        AppSettings.MainSettingsDocument.From(legacy).ApplyTo(settings, applyLanguage: false);
         return true;
     }
 

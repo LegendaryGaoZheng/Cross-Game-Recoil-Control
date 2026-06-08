@@ -1,7 +1,7 @@
 ﻿<Window x:Class="LegendaryCSharp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Legendary v3.1.2"
+        Title="Legendary v3.1.5"
         Icon="Assets/app.ico"
         Width="880"
         Height="660"
@@ -23,7 +23,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Legendary v3.1.2"
+                    <TextBlock Text="Legendary v3.1.5"
                                Foreground="#F7F0E2"
                                FontSize="26"
                                FontWeight="SemiBold" />

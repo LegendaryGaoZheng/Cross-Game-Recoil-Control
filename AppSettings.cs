@@ -156,10 +156,14 @@ public sealed class AppSettings
             Cut31IntervalMs = settings.Cut31IntervalMs
         };
 
-        public void ApplyTo(AppSettings settings)
+        public void ApplyTo(AppSettings settings, bool applyLanguage = true)
         {
             settings.MasterHotkey = MasterHotkey;
-            settings.Language = Localization.NormalizeLanguage(Language);
+            if (applyLanguage)
+            {
+                settings.Language = Localization.NormalizeLanguage(Language);
+            }
+
             settings.MasterEnabled = MasterEnabled;
             settings.TriggerSideKey = TriggerSideKey;
             settings.FireRate = FireRate;

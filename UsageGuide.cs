@@ -6,11 +6,12 @@ public static class UsageGuide
 
     private const string ChineseText =
         """
-        使用说明 v3.1.2
+        使用说明 v3.1.5
 
         语言
         - 主窗口右上角可以选择中文或 English。
         - 语言选择会保存到主配置，下次启动继续使用。
+        - v3.1.5 起，加载通用档案不会再覆盖当前语言。
 
         热键辅助总开关
         - PageDown：开关热键辅助。
@@ -57,11 +58,12 @@ public static class UsageGuide
 
     private const string EnglishText =
         """
-        Usage Guide v3.1.2
+        Usage Guide v3.1.5
 
         Language
         - Use the selector in the top-right corner to switch between Chinese and English.
         - The selected language is saved in the main settings and reused next time.
+        - Starting with v3.1.5, loading a general profile no longer overwrites the current language.
 
         Hotkey Master
         - PageDown toggles the hotkey-assisted features.
